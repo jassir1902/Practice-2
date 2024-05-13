@@ -12,5 +12,12 @@ namespace UPB.BusinessLogic.Models
         public string LastName { get; set; }
         public string CI { get; set; }
         public string BloodGroup { get; set; }
+        public string PatientCode { get; set; }
+    }
+    public class PatientData
+    {
+        public string Name { get; set; }
+        public string LastName { get; set; }
+        public string CI { get; set; }
     }
 }

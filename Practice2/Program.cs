@@ -20,6 +20,9 @@ builder.Services.AddSingleton<IFileStorageService, FileStorageService>(provider 
 
 builder.Services.AddControllers();
 builder.Services.AddTransient<IPatientManager, PatientManager>();
+// Agregar HttpClient como servicio
+builder.Services.AddHttpClient();
+
 
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();

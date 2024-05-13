@@ -53,6 +53,7 @@ namespace UPB.BusinessLogic.Managers
                 {
                     existingPatient.Name = patient.Name;
                     existingPatient.LastName = patient.LastName;
+                    existingPatient.PatientCode = patient.PatientCode;
                     _fileStorageService.SavePatients(patients);
                 }
                 else

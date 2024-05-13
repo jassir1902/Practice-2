@@ -1,5 +1,7 @@
 ﻿using Microsoft.AspNetCore.Mvc;
+using System.Net.Http;
 using UPB.BusinessLogic;
+using Newtonsoft.Json;
 using UPB.BusinessLogic.Exceptions;
 using UPB.BusinessLogic.Managers;
 using UPB.BusinessLogic.Models;
@@ -14,19 +16,14 @@ namespace Practice2.Controllers
     {
 
         private readonly IPatientManager _patientManager;
+        private readonly HttpClient _httpClient;
 
-        public PatientsController(IPatientManager patientManager)
+        public PatientsController(IPatientManager patientManager, HttpClient httpClient)
         {
             _patientManager = patientManager;
+            _httpClient = httpClient;
         }
 
-
-        // GET: api/<PatientsController>
-        /*[HttpGet]
-        public IEnumerable<Patient> GetPatients()
-        {
-            return _patientManager.GetAll();
-        }*/
 
         [HttpGet]
         public ActionResult<IEnumerable<Patient>> GetPatients()
@@ -69,7 +66,7 @@ namespace Practice2.Controllers
             }
         }
 
-        [HttpPost]
+        /*[HttpPost]
         public ActionResult<Patient> Post([FromBody] Patient patient)
         {
             try
@@ -78,6 +75,48 @@ namespace Practice2.Controllers
                 patient.BloodGroup = bloodGroup;
                 _patientManager.Create(patient);
                 return patient;
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, $"Internal server error: {ex.Message}");
+            }
+        }*/
+
+        [HttpPost]
+        public async Task<ActionResult<Patient>> Post([FromBody] Patient patient)
+        {
+            try
+            {
+                // Enviamos los datos del paciente al generador de códigos de pacientes en Practice 3
+                var patientData = new PatientData
+                {
+                    Name = patient.Name,
+                    LastName = patient.LastName,
+                    CI = patient.CI
+                };
+
+                var jsonPatientData = JsonConvert.SerializeObject(patientData);              
+                var content = new StringContent(jsonPatientData, System.Text.Encoding.UTF8, "application/json");
+
+                //var response = await _httpClient.PostAsync("http://localhost:5165/api/PatientCode/GeneratePatientCode", content);
+                var response = await _httpClient.PostAsync("http://localhost:5165/api/PatientCode", content);
+
+                if (!response.IsSuccessStatusCode)
+                {
+                    return StatusCode((int)response.StatusCode, "Failed to generate patient code.");
+                }
+
+                var patientCode = await response.Content.ReadAsStringAsync();
+
+                // Almacenamos el código de paciente generado junto con los demás datos del paciente
+                patient.PatientCode = patientCode;
+                
+                // Creamos al paciente
+                var bloodGroup = _patientManager.GenerateRandomBloodGroup();
+                patient.BloodGroup = bloodGroup;
+                _patientManager.Create(patient);
+
+                return Ok(patient);
             }
             catch (Exception ex)
             {
@@ -99,6 +138,7 @@ namespace Practice2.Controllers
 
                 existingPatient.Name = patient.Name;
                 existingPatient.LastName = patient.LastName;
+                //existingPatient.PatientCode = patient.PatientCode;
                 _patientManager.Update(existingPatient);
                 return Ok(patient);
             }
@@ -130,7 +170,7 @@ namespace Practice2.Controllers
             {
                 return StatusCode(500, $"Internal server error: {ex.Message}");
             }
-        }
+        }     
     }
 }
     
